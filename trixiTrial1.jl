@@ -20,69 +20,55 @@ function makeGrid(x,ele)
     return xGrid
 end
 
-function v1_fit(x,y,v1,ele)
-    sumFunc = 0
-    xx = makeGrid(x,ele)
-    yy = makeGrid(y,ele)
-    v11 = makeGrid(v1,ele)
-    xLine = xx[1,:]
-    yLine = yy[:,1]
-    #how do I store each polynomial below as an element in a vector?
-    xPoly = zeros(4)
-    yPoly = zeros(4)
-    #Find x polynomials
-    for i = 1:4
-        sum1 = 0
-        for j = 1:4
-            #how do I use symbolic x?
-            sum1 = sum1 + (x-xLine[j])/(xLine[i]-xLine[j])
-        end
-        xPoly[i] = sum1
-    end
-    #Find y polynomials
-    for i = 1:4
-        sum1 = 0
-        for j = 1:4
-            #how do I use symbolic y?
-            sum1 = sum1 + (y-yLine[j])/(yLine[i]-yLine[j])
-        end
-        yPoly[i] = sum1
-    end
-    #Put x,y polynomials together
-    for i = 1:4
-        for j = 1:4
-            #how can I put all these variables together symbolically?
-            sumFunc = sumFunc + v11[i,j]*xPoly[i]*yPoly[j]
+function Li_xBasis(x,xGrid,xi)
+    xPolBase = 0
+    for j = 1:16
+        #how do I use symbolic x?
+        if xi != xGrid[j]
+            xPolBase = xPolBase + (x-xGrid[j])/(xi-xGrid[j])
         end
     end
-    return sumFunc
+    return xPolBase
 end
 
-function plotty(sumFunc,x,y,v1,ele)
-    xx = makeGrid(x,ele)
-    yy = makeGrid(y,ele)
-    v11 = makeGrid(v1,ele)
-    homes = zeros[4,4]
-    for i= 1:4
-        for j= 1:4
-            #how can I plug values into the symbolic Lagrange polynomial?
-            homes[i,j] = sumFunc(xx[i,j],yy[i,j])
+function Lj_yBasis(y,yGrid,yi)
+    yPolBase = 0
+    for j = 1:16
+        #how do I use symbolic y?
+        if yi != yGrid[j]
+            yPolBase = yPolBase + (y-yGrid[j])/(yi-yGrid[j])
         end
     end
-    plot(xx,yy,homes)
+    return yPolBase
 end
 
-#To plot each element of v1 individually
-for i = 1:1024
-    #is there some way to concatinate graphs so that the functions can be overlayed on each other?
-    sumFunc = v1_fit(x,y,v1,i)
-    plotty(sumFunc,x,y,v1,i)
+function Pxy(xGrid,yGrid,v1Grid)
+    poly = zeros(16)
+    for i = 1:16
+        poly1=0
+        for j = 1:16
+            xPolBase = Li_xBasis(x[i],xGrid,xGrid[j])
+            yPolBase = Lj_yBasis(y[i],yGrid,yGrid[j])
+            poly1 = poly1 + v1Grid[j]*xPolBase*yPolBase
+        end
+        poly[i] = poly1
+    end
+    return poly
 end
 
-#To plot each element of v2 individually
-for i = 1:1024
-    sumFunc = v1_fit(x,y,v2,i)
-    plotty(sumFunc,x,y,v2,i)
+function plotty(x,y,v1)
+    #for i = 1:1
+    i=1
+        xGrid = x[:,i]
+        yGrid = y[:,i]
+        v1Grid = v1[:,i]
+        poly = Pxy(xGrid,yGrid,v1Grid)
+        xx = makeGrid(x,i)
+        yy = makeGrid(y,i)
+        poly = makeGrid(poly,1)
+        plot(xx,yy,poly)
+        # plot(xGrid,yGrid,poly)
+    #end
 end
 
-
+plotty(x,y,v1)
