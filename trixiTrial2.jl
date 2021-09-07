@@ -1,6 +1,6 @@
 using Trixi
 using StructArrays
-using Plots
+using GLMakie
 
 include("C:\\Users\\Prani\\.julia\\dev\\Trixi\\examples\\dgmulti_2d\\elixir_euler_kelvin_helmholtz_instability.jl")
 rho, rho_v1, rho_v2, E = StructArrays.components(sol.u[end])
@@ -30,5 +30,8 @@ dv1dy_plot = Vp * dv1dy
 
 vort = dv2dx - dv1dy
 
-scatter(vec(x), vec(y), vec(vort), zcolor=vec(vort), markerstrokewidth=0, ratio = 1, cam=(0,90))
+co = meshscatter(vec(x), vec(y), vec(vort), markersize = 0.1, color = vec(vort))
+Makie.save("GLMakieTrial.jpg",co)
+
+#scatter(vec(x), vec(y), vec(vort), zcolor=vec(vort), markerstrokewidth=0, ratio = 1, cam=(0,90))
 #scatter(vec(x), vec(y), vec(dudy), zcolor=vec(dudy), markerstrokewidth=0, ratio = 1, cam=(0,90))
