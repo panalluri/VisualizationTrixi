@@ -30,9 +30,11 @@ dv1dy_plot = Vp * dv1dy
 
 vort = dv2dx - dv1dy
 
-xVec = x[1,:]
-append!(x[1,:],[1])
-yVec=xVec
+# xVec = x[1,:]
+# xVec = append!(x[1,:],[1])
+# yVec=xVec
+
+#Plot one element
 
 function Li_xBasis(x,xVec,xi)
     lxi = 1
@@ -68,4 +70,54 @@ function usoln(x,y,xi,yi,xVec,yVec,uij)
     lxi = Li_xBasis(x,xVec,xi)
     lyi = Li_yBasis(y,yVec,yi)
     u_soln = uij*lxi*lyi
+    return u_soln
 end
+
+function usum(x,y,xVec,yVec,uGrid)
+    sum = 0
+    for i = 1:length(xVec)
+        for j=1:length(yVec)
+            lyi = Li_yBasis(y,yVec,y[j])
+            lxi = Li_xBasis(x,xVec,x[i])
+            sum = sum + uGrid[i,j]*lxi*lyi
+        end
+    end
+    return sum
+end
+
+function makeGrid(uVec)
+    uGrid = zeros(4,4)
+    z = [4 3 2 1]
+    for i = 1:4
+        uGrid[z[i],:] = transpose(uVec[(i-1)*4+1:i*4])
+    end
+    return uGrid
+end
+
+function elementz(x,y,u,ele)
+    xx = x[:,ele]
+    yy = sort(y[:,ele])
+    xVec = xx[1:4]
+    yVec = [yy[1] yy[5] yy[9] yy[13]]
+    uVec = u[:,ele]
+    return xVec, yVec, uVec
+end
+
+function unitPlot(xVec,yVec,uGrid)
+    plotty = zeros(length(xVec),length(xVec))
+    for i = 1:length(xVec)
+        for j = 1:length(yVec)
+            plotty[i,j] = usum(x,y,xVec,yVec,uGrid) 
+        end
+    end
+    return plotty
+end
+
+ele = 1
+xVec, yVec, uVec = elementz(x,y,vort,ele)
+uGrid = makeGrid(uVec)
+xGrid = makeGrid(x[:,ele])
+yGrid = makeGrid(y[:,ele])
+plotty = unitPlot(xVec,yVec,uGrid)
+
+plot(xGrid,yGrid,plotty)
