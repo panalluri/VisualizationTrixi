@@ -46,7 +46,7 @@ function ufunc(xVec,yVec,zVec)
     for i = 1:length(xVec)
         for j = 1:length(yVec)
             for k = 1:length(zVec)
-                ufunct[i,j,k] = zVec[k]*cos(xVec[i]) + zVec[k]*sin(yVec[j])
+                ufunct[i] = zVec[k]*cos(xVec[i]) + zVec[k]*sin(yVec[j])
             end
         end
     end
@@ -83,7 +83,7 @@ function Li_zBasis(z,zVec,zi)
     return lzi
 end
 
-function usoln(x,y,xi,yi,xVec,yVec,uij)
+function usoln(x,y,xi,yi,xVec,yVec,zVec,uij)
     lxi = Li_xBasis(x,xVec,xi)
     lyi = Li_yBasis(y,yVec,yi)
     lzi = Li_zBasis(z,zVec,zi)
@@ -107,18 +107,17 @@ function usum(x,y,z,xVec,yVec,zVec,uGrid)
 end
 
 function unitPlot(xVec,yVec,zVec,uGrid)
-    plotty = zeros(length(xVec),length(yVec),length(zVec))
+    plotty = zeros(length(xVec))
     for i = 1:length(xVec)
-        for j = 1:length(yVec)
-            for k=1:length(zVec)
-                plotty[i,j,k] = usum(xVec[i],yVec[j],zVec[k],xVec,yVec,zVec,uGrid) 
-            end
-        end
+        plotty[i] = usum(xVec[i],yVec[i],zVec[i],xVec,yVec,zVec,uGrid) 
     end
     return plotty
 end
 
 xVec, yVec, zVec = nodeOrganizer(nodes)
-uGrid = ufunc(xVec,yVec,zVec)
+xx = LinRange(0,1,100)
+yy = LinRange(0,1,100)
+zz = LinRange(0,1,100)
+uGrid = ufunc(xx,yy,zz)
 plotty = unitPlot(xVec,yVec,zVec,uGrid)
-scatter(xVec,yVec,zVec,plotty)
+meshscatter(xVec,yVec,zVec,color=plotty)
