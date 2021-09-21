@@ -20,7 +20,8 @@ facets = QuadFace{Cint}[
 ]
 
 mesh = Mesh(points, meta(facets))
-result = tetrahedralize(mesh, "vpq1.414a0.1")
+#change value after -a to control volume of elements
+result = tetrahedralize(mesh, "q1.1a0.01")
 
 using GLMakie
 
@@ -53,52 +54,52 @@ function ufunc(xVec,yVec,zVec)
     return ufunct
 end
 
-function Li_xBasis(x,xVec,xi)
+function Li_xBasis(x,xx,xi)
     lxi = 1
-    for j = 1:length(xVec)
-        if xi != xVec[j]
-            lxi = lxi*(x-xVec[j])/(xi-xVec[j])
+    for j = 1:length(xx)
+        if xi != xx[j]
+            lxi = lxi*(x-xx[j])/(xi-xx[j])
         end
     end
     return lxi
 end
 
-function Li_yBasis(y,yVec,yi)
+function Li_yBasis(y,yy,yi)
     lyi = 1
-    for j = 1:length(yVec)
-        if yi != yVec[j]
-            lyi = lyi*(y-yVec[j])/(yi-yVec[j])
+    for j = 1:length(yy)
+        if yi != yy[j]
+            lyi = lyi*(y-yy[j])/(yi-yy[j])
         end
     end
     return lyi
 end
 
-function Li_zBasis(z,zVec,zi)
+function Li_zBasis(z,zz,zi)
     lzi = 1
-    for j = 1:length(zVec)
-        if zi != zVec[j]
-            lzi = lzi*(z-zVec[j])/(zi-zVec[j])
+    for j = 1:length(zz)
+        if zi != zz[j]
+            lzi = lzi*(z-zz[j])/(zi-zz[j])
         end
     end
     return lzi
 end
 
-function usoln(x,y,xi,yi,xVec,yVec,zVec,uij)
-    lxi = Li_xBasis(x,xVec,xi)
-    lyi = Li_yBasis(y,yVec,yi)
-    lzi = Li_zBasis(z,zVec,zi)
+function usoln(x,y,xi,yi,xx,yy,zz,uij)
+    lxi = Li_xBasis(x,xx,xi)
+    lyi = Li_yBasis(y,yy,yi)
+    lzi = Li_zBasis(z,zz,zi)
     u_soln = uij*lxi*lyi*lzi
     return u_soln
 end
 
-function usum(x,y,z,xVec,yVec,zVec,uGrid)
+function usum(x,y,z,xx,yy,zz,uGrid)
     sum = 0
-    for i = 1:length(xVec)
-        for j=1:length(yVec)
-            for k =1:length(zVec)
-                lzi = Li_zBasis(z,zVec,zVec[k])
-                lyi = Li_yBasis(y,yVec,yVec[j])
-                lxi = Li_xBasis(x,xVec,xVec[i])
+    for i = 1:length(xx)
+        for j=1:length(yy)
+            for k =1:length(zz)
+                lzi = Li_zBasis(z,zz,zz[k])
+                lyi = Li_yBasis(y,yy,yy[j])
+                lxi = Li_xBasis(x,xx,xx[i])
                 sum = sum + uGrid[i,j,k]*lxi*lyi*lzi
             end
         end
@@ -106,10 +107,10 @@ function usum(x,y,z,xVec,yVec,zVec,uGrid)
     return sum
 end
 
-function unitPlot(xVec,yVec,zVec,uGrid)
+function unitPlot(xVec,yVec,zVec,xx,yy,zz,uGrid)
     plotty = zeros(length(xVec))
     for i = 1:length(xVec)
-        plotty[i] = usum(xVec[i],yVec[i],zVec[i],xVec,yVec,zVec,uGrid) 
+        plotty[i] = usum(xVec[i],yVec[i],zVec[i],xx,yy,zz,uGrid) 
     end
     return plotty
 end
@@ -119,5 +120,5 @@ xx = LinRange(0,1,100)
 yy = LinRange(0,1,100)
 zz = LinRange(0,1,100)
 uGrid = ufunc(xx,yy,zz)
-plotty = unitPlot(xVec,yVec,zVec,uGrid)
+plotty = unitPlot(xVec,yVec,zVec,xx,yy,zz,uGrid)
 meshscatter(xVec,yVec,zVec,color=plotty)
