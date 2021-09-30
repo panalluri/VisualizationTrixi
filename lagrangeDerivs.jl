@@ -58,6 +58,13 @@ function Li_xBasis(x,xx,xi)
             lxi = lxi*(x-xx[j])/(xi-xx[j])
         end
     end
+    ldir = 1
+    for j = 1:length(xx)
+        if xi != xx[j]
+            ldir = ldir*(1)/(x-xx[j])
+        end
+    end
+    lxi = lxi*ldir
     return lxi
 end
 
@@ -68,6 +75,13 @@ function Li_yBasis(y,yy,yi)
             lyi = lyi*(y-yy[j])/(yi-yy[j])
         end
     end
+    ldir = 1
+    for j = 1:length(yy)
+        if yi != yy[j]
+            ldir = ldir*(1)/(y-yy[j])
+        end
+    end
+    lyi = lyi*ldir
     return lyi
 end
 
@@ -78,6 +92,13 @@ function Li_zBasis(z,zz,zi)
             lzi = lzi*(z-zz[j])/(zi-zz[j])
         end
     end
+    ldir = 1
+    for j = 1:length(zz)
+        if zi != zz[j]
+            ldir = ldir*(1)/(z-zz[j])
+        end
+    end
+    lzi = lzi*ldir
     return lzi
 end
 
