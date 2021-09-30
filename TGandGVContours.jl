@@ -29,7 +29,7 @@ function tetrahedralization_of_cube()
     facetregion!(builder,6)
     facet!(builder,p4 ,p1 ,p5 ,p8)
 
-    meshy = simplexgrid(builder,maxvolume=0.1)
+    meshy = simplexgrid(builder,maxvolume=0.5)
 
     return meshy
 end
@@ -121,4 +121,5 @@ plotty = unitPlot(xVec,yVec,zVec,xx,yy,zz,uGrid)
 using GridVisualize
 using GLMakie
 
-scalarplot(meshy, plotty, Plotter=GLMakie,flevel=0.25)
+#scalarplot(meshy, plotty, Plotter=GLMakie,flevel=0.25)
+scalarplot(meshy, plotty, Plotter=GLMakie,outlinealpha=0,levels=[0.25;0.5;0.75])
