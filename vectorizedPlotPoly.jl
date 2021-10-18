@@ -17,14 +17,14 @@ function tetrahedralization_of_cube()
     # p7=point!(builder,1,1,1)
     # p8=point!(builder,0,1,1)
 
-    p1=point!(builder,-1,-1,-1)
-    p2=point!(builder,1,-1,-1)
-    p3=point!(builder,1,1,-1)
-    p4=point!(builder,-1,1,-1)
-    p5=point!(builder,-1,-1,1)
-    p6=point!(builder,1,-1,1)
-    p7=point!(builder,1,1,1)
-    p8=point!(builder,-1,1,1)
+    p1=point!(builder,-2,-2,-2)
+    p2=point!(builder,2,-2,-2)
+    p3=point!(builder,2,2,-2)
+    p4=point!(builder,-2,2,-2)
+    p5=point!(builder,-2,-2,2)
+    p6=point!(builder,2,-2,2)
+    p7=point!(builder,2,2,2)
+    p8=point!(builder,-2,2,2)
 
     facetregion!(builder,1)
     facet!(builder,p1 ,p2 ,p3 ,p4)  
@@ -39,7 +39,7 @@ function tetrahedralization_of_cube()
     facetregion!(builder,6)
     facet!(builder,p4 ,p1 ,p5 ,p8)
 
-    meshy = simplexgrid(builder,maxvolume=0.01)
+    meshy = simplexgrid(builder,maxvolume=0.1)
 
     return meshy
 end
@@ -85,33 +85,13 @@ function uCurl(xVec,yVec,zVec)
                 # Curl version
                 uGridx = -cos(xVec[i])*sin(yVec[j])*sin(zVec[k])
                 uGridy = -sin(xVec[i])*cos(yVec[j])*sin(zVec[k])
-                uGridz = cos(xVec[i])*sin(yVec[j])*sin(zVec[k]) + sin(xVec[i])*sin(yVec[j])*cos(zVec[k])
+                uGridz = sin(xVec[i])*sin(yVec[j])*cos(zVec[k]) + sin(xVec[i])*sin(yVec[j])*cos(zVec[k])
                 curly[i,j,k] = sqrt(uGridx^2+uGridy^2+uGridz^2)
             end
         end
     end
     return curly
 end
-
-# function uCurl(f,xVec,yVec,zVec)
-#     curly = zeros(length(xVec),length(yVec),length(zVec))
-#     for i = 1:length(xVec)
-#         for j = 1:length(yVec)
-#             for k = 1:length(zVec)
-#                 # Taylor-Greene Vortex 
-#                 w = [xVec[i],yVec[j],zVec[k]]
-
-#                 # Curl version
-#                 # uGridx = -cos(xVec[i])*sin(yVec[j])*sin(zVec[k])
-#                 # uGridy = -sin(xVec[i])*cos(yVec[j])*sin(zVec[k])
-#                 # uGridz = cos(xVec[i])*sin(yVec[j])*sin(zVec[k]) + sin(xVec[i])*sin(yVec[j])*cos(zVec[k])
-#                 curlyx,curlyy,curlyz = ForwardDiff.gradient(f,w)
-
-#             end
-#         end
-#     end
-#     return curly
-# end
 
 function Li_xBasis(x,xx,xi)
     lxi = 1
@@ -174,12 +154,10 @@ function unitPlot(xVec,yVec,zVec,xx,yy,zz,uGrid)
     return plotty
 end
 
-xx = LinRange(-1,1,10)
-yy = LinRange(-1,1,10)
-zz = LinRange(-1,1,10)
+xx = LinRange(-2,2,10)
+yy = LinRange(-2,2,10)
+zz = LinRange(-2,2,10)
 uGrid = ufunc(xx,yy,zz)
-# f(x,y,z) = [sin(x)*cos(y)*cos(z),-cos(x)*sin(y)*cos(z),0]
-# curly = uCurl(f,xx,yy,zz)
 curly = uCurl(xx,yy,zz)
 plotty = unitPlot(xVec,yVec,zVec,xx,yy,zz,uGrid)
 curlyPlot = unitPlot(xVec,yVec,zVec,xx,yy,zz,curly)
@@ -187,4 +165,5 @@ curlyPlot = unitPlot(xVec,yVec,zVec,xx,yy,zz,curly)
 using GridVisualize
 using GLMakie
 
-scalarplot(meshy, curlyPlot, Plotter=GLMakie,outlinealpha=0,levels=[0.25;0.5;0.75])
+#scalarplot(meshy, curlyPlot, Plotter=GLMakie,outlinealpha=0,levels=[0.25;0.5;0.75])
+scalarplot(meshy, curlyPlot, Plotter=GLMakie,outlinealpha=0,flevel=1)
