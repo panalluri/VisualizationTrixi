@@ -48,7 +48,7 @@ end
 xlims=(-pi,pi)
 ylims=(-pi,pi)
 zlims=(-pi,pi)
-meshy = tetrahedralization_of_cube(xlims=xlims, ylims=ylims, zlims=zlims, maxvolume=.001)
+meshy = tetrahedralization_of_cube(xlims=xlims, ylims=ylims, zlims=zlims, maxvolume=.1)
 xVec = meshy.components[Coordinates][1,:]
 yVec = meshy.components[Coordinates][2,:]
 zVec = meshy.components[Coordinates][3,:]
@@ -59,16 +59,16 @@ function ufunc(xVec,yVec,zVec)
         for j = 1:length(yVec)
             for k = 1:length(zVec)
                 # Taylor-Greene Vortex 
-                uGridx = sin(xVec[i])*cos(yVec[j])*cos(zVec[k])
-                uGridy = -cos(xVec[i])*sin(yVec[j])*cos(zVec[k])
-                uGridz = 0
-                uGrid[i,j,k] = sqrt(uGridx^2+uGridy^2+uGridz^2)
+                # uGridx = sin(xVec[i])*cos(yVec[j])*cos(zVec[k])
+                # uGridy = -cos(xVec[i])*sin(yVec[j])*cos(zVec[k])
+                # uGridz = 0
+                # uGrid[i,j,k] = sqrt(uGridx^2+uGridy^2+uGridz^2)
 
                 # Version w/ u=x, v=y, w=z
-                # uGridx = xVec[i]
-                # uGridy = yVec[j]
-                # uGridz = zVec[k]
-                # uGrid[i,j,k] = sqrt(uGridx^2+uGridy^2+uGridz^2)
+                uGridx = xVec[i]
+                uGridy = yVec[j]
+                uGridz = zVec[k]
+                uGrid[i,j,k] = sqrt(uGridx^2+uGridy^2+uGridz^2)
             end
         end
     end
@@ -87,43 +87,43 @@ function uCurl(xVec,yVec,zVec)
                 # uGrid[i,j,k] = sqrt(uGridx^2+uGridy^2+uGridz^2)
 
                 # Curl version
-                # uGridx = -cos(xVec[i]) * sin(yVec[j]) * sin(zVec[k])
-                # uGridy = -sin(xVec[i]) * cos(yVec[j]) * sin(zVec[k])
-                # uGridz = sin(xVec[i]) * sin(yVec[j]) * cos(zVec[k]) + sin(xVec[i]) * sin(yVec[j]) * cos(zVec[k])
-                # curly[i,j,k] = sqrt(uGridx^2 + uGridy^2 + uGridz^2)
+                uGridx = -cos(xVec[i]) * sin(yVec[j]) * sin(zVec[k])
+                uGridy = -sin(xVec[i]) * cos(yVec[j]) * sin(zVec[k])
+                uGridz = sin(xVec[i]) * sin(yVec[j]) * cos(zVec[k]) + sin(xVec[i]) * sin(yVec[j]) * cos(zVec[k])
+                curly[i,j,k] = sqrt(uGridx^2 + uGridy^2 + uGridz^2)
 
                 # partial derivatives
-                dudx = cos(xVec[i])*cos(yVec[j])*cos(zVec[k])
-                dudy = -sin(xVec[i])*sin(yVec[j])*cos(zVec[k])
-                dudz = -sin(xVec[i])*cos(yVec[j])*sin(zVec[k])
-                dvdx = sin(xVec[i])*sin(yVec[j])*cos(zVec[k])
-                dvdy = -cos(xVec[i])*cos(yVec[j])*cos(zVec[k])
-                dvdz = cos(xVec[i])*sin(yVec[j])*sin(zVec[k])
-                dwdx = 0
-                dwdy = 0
-                dwdz = 0
+                # dudx = cos(xVec[i])*cos(yVec[j])*cos(zVec[k])
+                # dudy = -sin(xVec[i])*sin(yVec[j])*cos(zVec[k])
+                # dudz = -sin(xVec[i])*cos(yVec[j])*sin(zVec[k])
+                # dvdx = sin(xVec[i])*sin(yVec[j])*cos(zVec[k])
+                # dvdy = -cos(xVec[i])*cos(yVec[j])*cos(zVec[k])
+                # dvdz = cos(xVec[i])*sin(yVec[j])*sin(zVec[k])
+                # dwdx = 0
+                # dwdy = 0
+                # dwdz = 0
 
-                omega = zeros(3,3)
-                omega[1,2] = 0.5*(dudy-dvdx)
-                omega[1,3] = 0.5*(dudz-dwdx)
-                omega[2,1] = 0.5*(dvdx-dudy)
-                omega[2,3] = 0.5*(dvdz-dwdx)
-                omega[3,1] = 0.5*(dwdx-dudz)
-                omega[3,2] = 0.5*(dwdy-dvdz)
+                # omega = zeros(3,3)
+                # omega[1,2] = 0.5*(dudy-dvdx)
+                # omega[1,3] = 0.5*(dudz-dwdx)
+                # omega[2,1] = 0.5*(dvdx-dudy)
+                # omega[2,3] = 0.5*(dvdz-dwdx)
+                # omega[3,1] = 0.5*(dwdx-dudz)
+                # omega[3,2] = 0.5*(dwdy-dvdz)
 
-                S = zeros(3,3)
-                S[1,1] = dudx
-                S[1,2] = 0.5*(dudy-dvdx)
-                S[1,3] = 0.5*(dudz-dwdx)
-                S[2,1] = 0.5*(dvdx-dudy)
-                S[2,2] = dvdy
-                S[2,3] = 0.5*(dvdz-dwdx)
-                S[3,1] = 0.5*(dwdx-dudz)
-                S[3,2] = 0.5*(dwdy-dvdz)
-                S[3,3] = dwdz
+                # S = zeros(3,3)
+                # S[1,1] = dudx
+                # S[1,2] = 0.5*(dudy-dvdx)
+                # S[1,3] = 0.5*(dudz-dwdx)
+                # S[2,1] = 0.5*(dvdx-dudy)
+                # S[2,2] = dvdy
+                # S[2,3] = 0.5*(dvdz-dwdx)
+                # S[3,1] = 0.5*(dwdx-dudz)
+                # S[3,2] = 0.5*(dwdy-dvdz)
+                # S[3,3] = dwdz
 
-                Q = 0.5*(norm(omega)^2-norm(S)^2)
-                curly[i,j,k] = Q
+                # Q = 0.5*(norm(omega)^2-norm(S)^2)
+                # curly[i,j,k] = Q
                 
             end
         end
@@ -131,21 +131,21 @@ function uCurl(xVec,yVec,zVec)
     return curly
 end
 
-function Li_xBasis(x,xx,xi)
+function Li_xBasis(x, xx, xi)
     lxi = 1
     for j = 1:length(xx)
         if xi != xx[j]
-            lxi = lxi * (x-xx[j]) / (xi - xx[j])
+            lxi = lxi * (x-xx[j])
         end
     end
     return lxi
 end
 
-function Li_yBasis(y,yy,yi)
+function Li_yBasis(y, yy, yi)
     lyi = 1
     for j = 1:length(yy)
         if yi != yy[j]
-            lyi = lyi * (y-yy[j]) / (yi-yy[j])
+            lyi = lyi * (y-yy[j])
         end
     end
     return lyi
@@ -155,28 +155,58 @@ function Li_zBasis(z, zz, zi)
     lzi = 1
     for j = 1:length(zz)
         if zi != zz[j]
-            lzi = lzi*(z-zz[j])/(zi-zz[j])
+            lzi = lzi*(z-zz[j])
         end
     end
     return lzi
 end
 
-function usoln(x,y,xi,yi,xx,yy,zz,uij)
-    lxi = Li_xBasis(x, xx, xi)
-    lyi = Li_yBasis(y, yy, yi)
-    lzi = Li_zBasis(z, zz, zi)
-    u_soln = uij * lxi * lyi * lzi
-    return u_soln
+function barry(xx,yy,zz)
+    wx=zeros(1,length(xx))
+    wy=zeros(1,length(yy))
+    wz=zeros(1,length(zz))
+    for j = 1:length(xx)
+        wjx=1
+        for k = 1:length(xx)
+            if xx[j] != xx[k]
+                wjx = wjx*1/(xx[j]-xx[k])
+            end
+        end
+        wx[j]=wjx
+    end
+    for j = 1:length(yy)
+        wjy=1
+        for k = 1:length(yy)
+            if yy[j] != yy[k]
+                wjy = wjy*1/(yy[j]-yy[k])
+            end
+        end
+        wy[j]=wjy
+    end
+    for j = 1:length(zz)
+        wjz=1
+        for k = 1:length(zz)
+            if zz[j] != zz[k]
+                wjz = wjz*1/(zz[j]-zz[k])
+            end
+        end
+        wz[j]=wjz
+    end
+    return wx, wy, wz
 end
 
 function usum(x,y,z,xx,yy,zz,uGrid)
     sum = 0
+    wx, wy, wz = barry(xx,yy,zz)
     for i = 1:length(xx)
         for j=1:length(yy)
             for k =1:length(zz)
                 lzi = Li_zBasis(z, zz, zz[k])
                 lyi = Li_yBasis(y, yy, yy[j])
                 lxi = Li_xBasis(x, xx, xx[i])
+                lxi = lxi*wx[i]
+                lyi = lyi*wy[j]
+                lzi = lzi*wz[k]
                 sum = sum + uGrid[i,j,k] * lxi * lyi * lzi
             end
         end
@@ -186,7 +216,7 @@ end
 
 function unitPlot(xVec,yVec,zVec,xx,yy,zz,uGrid)
     plotty = zeros(length(xVec))
-    @batch for i = 1:length(xVec) # compare with Threads.@threads?
+    @batch for i = 1:length(xVec)
         plotty[i] = usum(xVec[i], yVec[i], zVec[i], xx, yy, zz, uGrid) 
     end
     return plotty
@@ -205,5 +235,5 @@ curly = uCurl(xx,yy,zz)
 plotty = unitPlot(xVec,yVec,zVec,xx,yy,zz,uGrid)
 curlyPlot = unitPlot(xVec,yVec,zVec,xx,yy,zz,curly)
 
-scalarplot(meshy, curlyPlot, Plotter=GLMakie,outlinealpha=0,levels=[-0.3303127957878166;-0.40250456578660326;-0.7735783340984158])
-#scalarplot(meshy, curlyPlot, Plotter=GLMakie, outlinealpha=0, flevel=-0.40250456578660326)
+scalarplot(meshy, curlyPlot, Plotter=GLMakie,outlinealpha=0,levels=[1;2;3])
+# scalarplot(meshy, plotty, Plotter=GLMakie, outlinealpha=0, flevel=0.75)
