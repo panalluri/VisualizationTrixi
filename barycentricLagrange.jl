@@ -9,15 +9,6 @@ function tetrahedralization_of_cube(; xlims=(-1,1), ylims=(-1,1), zlims=(-1,1), 
     
     builder=SimplexGridBuilder(Generator=TetGen)
 
-    # p1=point!(builder,0,0,0)
-    # p2=point!(builder,1,0,0)
-    # p3=point!(builder,1,1,0)
-    # p4=point!(builder,0,1,0)
-    # p5=point!(builder,0,0,1)
-    # p6=point!(builder,1,0,1)
-    # p7=point!(builder,1,1,1)
-    # p8=point!(builder,0,1,1)
-
     p1=point!(builder, xlims[1], ylims[1], zlims[1])
     p2=point!(builder, xlims[2], ylims[1], zlims[1])
     p3=point!(builder, xlims[2], ylims[2], zlims[1])
@@ -58,7 +49,7 @@ function ufunc(xVec,yVec,zVec)
     for i = 1:length(xVec)
         for j = 1:length(yVec)
             for k = 1:length(zVec)
-                # Taylor-Greene Vortex 
+                # Taylor-Green Vortex 
                 # uGridx = sin(xVec[i])*cos(yVec[j])*cos(zVec[k])
                 # uGridy = -cos(xVec[i])*sin(yVec[j])*cos(zVec[k])
                 # uGridz = 0
@@ -75,6 +66,7 @@ function ufunc(xVec,yVec,zVec)
     return uGrid
 end
 
+# TODO: compute curl from a given vector field instead of specifying it analytically
 function uCurl(xVec,yVec,zVec)
     curly = zeros(length(xVec),length(yVec),length(zVec))
     for i = 1:length(xVec)
@@ -131,7 +123,7 @@ function uCurl(xVec,yVec,zVec)
     return curly
 end
 
-function Li_xBasis(x, xx, xi)
+function Li_Basis(x, xx, xi)
     lxi = 1
     for j = 1:length(xx)
         if xi != xx[j]
@@ -141,72 +133,56 @@ function Li_xBasis(x, xx, xi)
     return lxi
 end
 
-function Li_yBasis(y, yy, yi)
-    lyi = 1
-    for j = 1:length(yy)
-        if yi != yy[j]
-            lyi = lyi * (y-yy[j])
-        end
-    end
-    return lyi
-end
-
-function Li_zBasis(z, zz, zi)
-    lzi = 1
-    for j = 1:length(zz)
-        if zi != zz[j]
-            lzi = lzi*(z-zz[j])
-        end
-    end
-    return lzi
-end
-
-function barry(xx,yy,zz)
-    wx=zeros(1,length(xx))
-    wy=zeros(1,length(yy))
-    wz=zeros(1,length(zz))
+function bary(xx,yy,zz)
+    # TODO: avoid allocating these temporary arrays for additional speedup
+    wx = zeros(1,length(xx))
+    wy = zeros(1,length(yy))
+    wz = zeros(1,length(zz))
     for j = 1:length(xx)
-        wjx=1
+        wjx = 1
         for k = 1:length(xx)
             if xx[j] != xx[k]
-                wjx = wjx*1/(xx[j]-xx[k])
+                wjx = wjx * 1 / (xx[j]-xx[k])
             end
         end
-        wx[j]=wjx
+        wx[j] = wjx
     end
     for j = 1:length(yy)
-        wjy=1
+        wjy = 1
         for k = 1:length(yy)
             if yy[j] != yy[k]
-                wjy = wjy*1/(yy[j]-yy[k])
+                wjy = wjy * 1 / (yy[j]-yy[k])
             end
         end
-        wy[j]=wjy
+        wy[j] = wjy
     end
     for j = 1:length(zz)
-        wjz=1
+        wjz = 1
         for k = 1:length(zz)
             if zz[j] != zz[k]
-                wjz = wjz*1/(zz[j]-zz[k])
+                wjz = wjz * 1 / (zz[j] - zz[k])
             end
         end
-        wz[j]=wjz
+        wz[j] = wjz
     end
     return wx, wy, wz
 end
 
 function usum(x,y,z,xx,yy,zz,uGrid)
     sum = 0
-    wx, wy, wz = barry(xx,yy,zz)
+    # TODO: move these out of the `usum` function - you only need to 
+    # compute them once per `unitPlot`. 
+    wx, wy, wz = bary(xx, yy, zz)
     for i = 1:length(xx)
-        for j=1:length(yy)
+        for j = 1:length(yy)
             for k =1:length(zz)
-                lzi = Li_zBasis(z, zz, zz[k])
-                lyi = Li_yBasis(y, yy, yy[j])
-                lxi = Li_xBasis(x, xx, xx[i])
-                lxi = lxi*wx[i]
-                lyi = lyi*wy[j]
-                lzi = lzi*wz[k]
+                # TODO: Li_Basis should be replaced by the barycentric version
+                lzi = Li_Basis(z, zz, zz[k])
+                lyi = Li_Basis(y, yy, yy[j])
+                lxi = Li_Basis(x, xx, xx[i])
+                lxi = lxi * wx[i]
+                lyi = lyi * wy[j]
+                lzi = lzi * wz[k]
                 sum = sum + uGrid[i,j,k] * lxi * lyi * lzi
             end
         end
