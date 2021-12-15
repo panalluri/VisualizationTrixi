@@ -216,7 +216,7 @@ list_of_colors=[]
 for j = 1:3
 
     #mesh over 3D domain
-    meshy = tetrahedralization_of_cube(xlims=xyzlims[j], ylims=xyzlims[j], zlims=xyzlims[j], maxvolume=1)
+    meshy = tetrahedralization_of_cube(xlims=xyzlims[j], ylims=xyzlims[j], zlims=xyzlims[j], maxvolume=0.25)
     #extract coordinates and connectivity matrix from mesh
     coord = meshy.components[Coordinates]
     cellnodes = meshy.components[CellNodes] #connectivity matrix 
@@ -224,7 +224,6 @@ for j = 1:3
     xVec,yVec,zVec = (meshy.components[Coordinates][i,:] for i = 1:3)
 
     #create chebyshev nodes
-    n = length(xVec)-1
     n = 7
     θ = LinRange(0, pi, n+1)    
     xn = sort(cos.(θ))
