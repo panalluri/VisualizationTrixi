@@ -269,3 +269,14 @@ end
 
 #display final figure
 fig
+
+#store data in struct
+#create struct
+struct outputInfo
+    mesh_list
+    iso_list
+    domain_lims
+end
+
+#specify data inputs to struct
+isoGraphInfo = outputInfo(list_of_meshes,list_of_flevels,xyzlims)
