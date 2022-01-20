@@ -14,9 +14,12 @@ coords = []
 
 #create warped domain
 rd = RefElemData(Hex(), N=7)
-md = MeshData(uniform_mesh(Hex(), 2)..., rd) 
+md = MeshData(uniform_mesh(Hex(), 1)..., rd) # ", 1" for one element
 
-@unpack xVec, yVec, zVec = md #node points??
+@unpack xp,yp,zp = md #node points??
+xVec = xp
+yVec = yp
+zVec = zp
 # coords[1] = ??????
 
 input = TetGen.RawTetGenIO{Cdouble}(pointlist=vcat(transpose.(rd.rstp)...))
