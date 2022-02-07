@@ -3,6 +3,9 @@ using LinearAlgebra
 using Trixi
 using StructArrays
 using OrdinaryDiffEq
+using GeometryBasics, Colors
+using StartUpDG
+using GLMakie: GLMakie
 
 #create struct to hold node pts, func pts, connectivity matrix
 struct PlotData3DTriangulated{DataType, NodeType, FaceNodeType, FaceDataType, VariableNames, PlottingTriangulation}
@@ -18,31 +21,64 @@ struct PlotData3DTriangulated{DataType, NodeType, FaceNodeType, FaceDataType, Va
   variable_names::VariableNames
 end
 
+# constructor for a PlotData3DTriangulated object
+function PlotData3DTriangulated(u::StructArray, mesh, equations, solver::DGMulti, cache; 
+                                solution_variables=nothing)
+    
+    # get RefElemData, MeshData from Trixi
+    rd = solver.basis
+    md = mesh.md
+    @unpack x, y, z = md
+
+    solution_variables_ = digest_solution_variables(equations, solution_variables)
+    variable_names = SVector(varnames(solution_variables_, equations))
+
+    # generate reference triangulation
+    input = TetGen.RawTetGenIO{Cdouble}(pointlist=vcat(transpose.(rd.rstp)...))
+    triangulation = tetrahedralize(input, "Q")
+    connectivity = triangulation.tetrahedronlist # connectivity matrix
+
+    # find plotting pts from Trixi mesh nodes
+    # TODO: make more efficient
+    x_plot, y_plot, z_plot = (x -> rd.Vp * x).((x, y, z))
+
+    uEltype = eltype(first(u))
+    nvars = nvariables(equations)
+    num_plotting_points = size(rd.Vp, 1)
+    u_plot = StructArray{SVector{nvars, uEltype}}(ntuple(_ -> zeros(uEltype, num_plotting_points, md.num_elements), nvars))
+    u_plot = StructArrays.foreachfield((out, x_in) -> mul!(out, rd.Vp, x_in), u, u_plot)
+
+    # interpolated data
+    return PlotData3DTriangulated(x_plot, y_plot, z_plot, u_plot, connectivity, 
+                                  nothing, nothing, nothing, nothing, 
+                                  variable_names)
+end
+
+struct PlotData3DIsosurface{IsosurfaceFunction}
+    pd::PlotData3DTriangulated
+    f::IsosurfaceFunction
+end
+
+# PlotData3DIsosurface{Function}
+# PlotData3DIsosurface{DerivativeFunction}
+
+# specific functions for isosurfaces
+
 #run trixi simulation and output trixi data
 trixi_include("C:\\Users\\Prani\\.julia\\packages\\Trixi\\IAU6j\\examples\\dgmulti_3d\\elixir_euler_taylor_green_vortex.jl", tspan=(0 ,0.1), polydeg=7)
+# trixi_include("~/.julia/dev/Trixi/examples/dgmulti_3d/elixir_euler_taylor_green_vortex.jl", tspan=(0 ,0.1), polydeg=7)
 
 # get RefElemData, MeshData from Trixi
 rd = solver.basis
 md = mesh.md
-
-rho, rho_v1, rho_v2, rho_v3, E = StructArrays.components(sol.u[end])
-v1 = rho_v1./rho
-v2 = rho_v2./rho
-v3 = rho_v3./rho
-
 @unpack x, y, z = md
 
-using GLMakie, GeometryBasics, Colors
-using StartUpDG
-
-#create warped domain
 # generate reference triangulation
 input = TetGen.RawTetGenIO{Cdouble}(pointlist=vcat(transpose.(rd.rstp)...))
 triangulation = tetrahedralize(input, "Q")
-#connectivity matrix
-connectivity = triangulation.tetrahedronlist
+connectivity = triangulation.tetrahedronlist # connectivity matrix
 
-#find plotting pts from trixi mesh nodes
+# find plotting pts from trixi mesh nodes
 xp, yp, zp = (x -> rd.Vp * x).((x, y, z))
 
 # r, s, t = reference coordinates. 
@@ -59,6 +95,12 @@ function derivative(u, coordinate, rd, md)
   end
 end
 
+# specific to the equation!
+rho, rho_v1, rho_v2, rho_v3, E = StructArrays.components(sol.u[end])
+v1 = rho_v1./rho
+v2 = rho_v2./rho
+v3 = rho_v3./rho
+
 dudx = derivative(v1, 1, rd, md)
 dudy = derivative(v1, 2, rd, md)
 dudz = derivative(v1, 3, rd, md)
@@ -69,7 +111,7 @@ dwdx = derivative(v3, 1, rd, md)
 dwdy = derivative(v3, 2, rd, md)
 dwdz = derivative(v3, 3, rd, md)
 
-#find Q criteria
+# find Q criteria
 func_old = zeros(size(x))
 omega = zeros(3,3)
 S = zeros(3,3)
@@ -97,26 +139,23 @@ for j = 1:(size(x)[2])
     end
 end
 
-#reference element data
-ref_elem = PlotData3DTriangulated(x,y,z,func_old,connectivity,[],[],[],[],[])
-
 #interpolate func matrix
 func = rd.Vp * func_old
 
 #interpolated data
-inter_elem = PlotData3DTriangulated(xp,yp,zp,func,connectivity,[],[],[],[],[])
+plot_data = PlotData3DTriangulated(xp, yp, zp, func, connectivity, [], [], [], [], [])
 
 #extract details about location isosurface pts using marching tetrahedra algorithm
 level = [-.5] 
 
 # create isosurface meshes to plot 
-function global_plotting_triangulation_makie(inter_elem, level)
+function global_plotting_triangulation_makie(plot_data, level)
 
-  xp = inter_elem.x
-  yp = inter_elem.y
-  zp = inter_elem.z
-  func = inter_elem.data
-  connectivity = inter_elem.t
+  xp = plot_data.x
+  yp = plot_data.y
+  zp = plot_data.z
+  func = plot_data.data # TODO: assumes func is a scalar!  
+  connectivity = plot_data.t
 
   plotting_coordinates = zeros(3, size(xp, 1))
   num_elements = size(xp, 2)
@@ -128,9 +167,12 @@ function global_plotting_triangulation_makie(inter_elem, level)
     plotting_coordinates[1, :] .= xp[:, e]
     plotting_coordinates[2, :] .= yp[:, e]
     plotting_coordinates[3, :] .= zp[:, e]
+
+    # TODO: add computation func using IsosurfaceFunction
+
     pts, trngls, fvals = GridVisualize.marching_tetrahedra(plotting_coordinates,
-                                                          connectivity,
-                                                          func[:, e], planes, level)
+                                                           connectivity,
+                                                           func[:, e], planes, level)
 
     #output mesh that encompasses isosurface
     if length(pts) > 0
@@ -145,10 +187,9 @@ function global_plotting_triangulation_makie(inter_elem, level)
 
   plotting_mesh = merge(list_of_meshes[1:sk-1])
   return plotting_mesh
-
 end
 
-plotting_mesh = global_plotting_triangulation_makie(inter_elem, level)
+plotting_mesh = global_plotting_triangulation_makie(plot_data, level)
 
 solution_z = getindex.(plotting_mesh.position, 3)
 Makie.mesh(plotting_mesh, color=solution_z, shading=false)
