@@ -7,6 +7,10 @@ using GeometryBasics, Colors
 using StartUpDG
 using GLMakie: GLMakie
 
+using Trixi: mesh_equations_solver_cache, AbstractSemidiscretization, digest_solution_variables, ScalarData
+import Trixi: iplot
+
+
 #create struct to hold node pts, func pts, connectivity matrix
 struct PlotData3DTriangulated{DataType, NodeType, FaceNodeType, FaceDataType, VariableNames, PlottingTriangulation}
   x::NodeType # physical nodal coordinates, size (num_plotting_nodes x num_elements)
@@ -21,16 +25,17 @@ struct PlotData3DTriangulated{DataType, NodeType, FaceNodeType, FaceDataType, Va
   variable_names::VariableNames
 end
 
+
 # constructor for a PlotData3DTriangulated object
-function ScalarData3D(u, mesh, equations, solver::DGMulti, cache; variable_name=nothing)
+ScalarPlotData3D(u, semi::AbstractSemidiscretization; kwargs...) = 
+    ScalarPlotData3D(u, mesh_equations_solver_cache(semi)...; kwargs...)
+
+function ScalarPlotData3D(u, mesh, equations, solver::DGMulti, cache; variable_name=nothing)
     
     # get RefElemData, MeshData from Trixi
     rd = solver.basis
     md = mesh.md
     @unpack x, y, z = md
-
-    solution_variables_ = digest_solution_variables(equations, solution_variables)
-    variable_names = SVector(varnames(solution_variables_, equations))
 
     # generate reference triangulation
     input = TetGen.RawTetGenIO{Cdouble}(pointlist=vcat(transpose.(rd.rstp)...))
@@ -38,20 +43,19 @@ function ScalarData3D(u, mesh, equations, solver::DGMulti, cache; variable_name=
     connectivity = triangulation.tetrahedronlist # connectivity matrix
 
     # find plotting pts from Trixi mesh nodes
-    # TODO: make more efficient
+    # TODO: DGMulti. make more efficient
     x_plot, y_plot, z_plot, u_plot = (x -> rd.Vp * x).((x, y, z, u))
 
     # interpolated data
     return PlotData3DTriangulated(x_plot, y_plot, z_plot, ScalarData(u_plot), connectivity, 
-                                  nothing, nothing, nothing, nothing, 
-                                  variable_names)
+                                  nothing, nothing, nothing, nothing, variable_name)
 end
 
 # specific functions for isosurfaces
 
 #run trixi simulation and output trixi data
-trixi_include("C:\\Users\\Prani\\.julia\\packages\\Trixi\\IAU6j\\examples\\dgmulti_3d\\elixir_euler_taylor_green_vortex.jl", tspan=(0 ,0.1), polydeg=7)
-# trixi_include("~/.julia/dev/Trixi/examples/dgmulti_3d/elixir_euler_taylor_green_vortex.jl", tspan=(0 ,0.1), polydeg=7)
+# trixi_include("C:\\Users\\Prani\\.julia\\packages\\Trixi\\IAU6j\\examples\\dgmulti_3d\\elixir_euler_taylor_green_vortex.jl", tspan=(0 ,0.1), polydeg=7)
+trixi_include("/Users/jessechan/.julia/dev/Trixi/examples/dgmulti_3d/elixir_euler_taylor_green_vortex.jl", tspan=(0, 0.1), polydeg=7)
 
 # get RefElemData, MeshData from Trixi
 rd = solver.basis
@@ -124,6 +128,13 @@ for j = 1:(size(x)[2])
     end
 end
 
+plot_data = ScalarPlotData3D(func_old, semi)
+
+function Trixi.iplot(pd::PlotData3DTriangulated{<:ScalarData}; 
+               show_axis=false, colormap=Trixi.default_Makie_colormap())
+    println("Helloooo")
+end
+
 #interpolate func matrix
 func = rd.Vp * func_old
 
@@ -139,7 +150,7 @@ function global_plotting_triangulation_makie(plot_data, level)
   xp = plot_data.x
   yp = plot_data.y
   zp = plot_data.z
-  func = plot_data.data # TODO: assumes func is a scalar!  
+  func = plot_data.data.data
   connectivity = plot_data.t
 
   plotting_coordinates = zeros(3, size(xp, 1))
@@ -152,8 +163,6 @@ function global_plotting_triangulation_makie(plot_data, level)
     plotting_coordinates[1, :] .= xp[:, e]
     plotting_coordinates[2, :] .= yp[:, e]
     plotting_coordinates[3, :] .= zp[:, e]
-
-    # TODO: add computation func using IsosurfaceFunction
 
     pts, trngls, fvals = GridVisualize.marching_tetrahedra(plotting_coordinates,
                                                            connectivity,
