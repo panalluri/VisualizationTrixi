@@ -22,8 +22,7 @@ struct PlotData3DTriangulated{DataType, NodeType, FaceNodeType, FaceDataType, Va
 end
 
 # constructor for a PlotData3DTriangulated object
-function PlotData3DTriangulated(u::StructArray, mesh, equations, solver::DGMulti, cache; 
-                                solution_variables=nothing)
+function ScalarData3D(u, mesh, equations, solver::DGMulti, cache; variable_name=nothing)
     
     # get RefElemData, MeshData from Trixi
     rd = solver.basis
@@ -40,27 +39,13 @@ function PlotData3DTriangulated(u::StructArray, mesh, equations, solver::DGMulti
 
     # find plotting pts from Trixi mesh nodes
     # TODO: make more efficient
-    x_plot, y_plot, z_plot = (x -> rd.Vp * x).((x, y, z))
-
-    uEltype = eltype(first(u))
-    nvars = nvariables(equations)
-    num_plotting_points = size(rd.Vp, 1)
-    u_plot = StructArray{SVector{nvars, uEltype}}(ntuple(_ -> zeros(uEltype, num_plotting_points, md.num_elements), nvars))
-    u_plot = StructArrays.foreachfield((out, x_in) -> mul!(out, rd.Vp, x_in), u, u_plot)
+    x_plot, y_plot, z_plot, u_plot = (x -> rd.Vp * x).((x, y, z, u))
 
     # interpolated data
-    return PlotData3DTriangulated(x_plot, y_plot, z_plot, u_plot, connectivity, 
+    return PlotData3DTriangulated(x_plot, y_plot, z_plot, ScalarData(u_plot), connectivity, 
                                   nothing, nothing, nothing, nothing, 
                                   variable_names)
 end
-
-struct PlotData3DIsosurface{IsosurfaceFunction}
-    pd::PlotData3DTriangulated
-    f::IsosurfaceFunction
-end
-
-# PlotData3DIsosurface{Function}
-# PlotData3DIsosurface{DerivativeFunction}
 
 # specific functions for isosurfaces
 
